@@ -31,6 +31,12 @@ function Player({ currentTrack, isManager, onUpdate }) {
       console.error('Erro ao controlar reprodução:', error);
       setActionError(error.message);
       setLoading(false);
+      
+      if (error.message === 'Token expirado' || error.message === 'Não autenticado') {
+        setTimeout(() => {
+          window.location.href = window.location.origin + window.location.pathname;
+        }, 2000);
+      }
     }
   };
 
@@ -53,6 +59,12 @@ function Player({ currentTrack, isManager, onUpdate }) {
       console.error('Erro ao pular música:', error);
       setActionError(error.message);
       setLoading(false);
+      
+      if (error.message === 'Token expirado' || error.message === 'Não autenticado') {
+        setTimeout(() => {
+          window.location.href = window.location.origin + window.location.pathname;
+        }, 2000);
+      }
     }
   };
 
@@ -75,6 +87,12 @@ function Player({ currentTrack, isManager, onUpdate }) {
       console.error('Erro ao voltar música:', error);
       setActionError(error.message);
       setLoading(false);
+      
+      if (error.message === 'Token expirado' || error.message === 'Não autenticado') {
+        setTimeout(() => {
+          window.location.href = window.location.origin + window.location.pathname;
+        }, 2000);
+      }
     }
   };
 

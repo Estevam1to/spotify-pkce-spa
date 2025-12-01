@@ -10,8 +10,11 @@ class AuthService {
     }
     this.redirectUri = window.location.origin + pathname;
     
-    this.accessToken = null;
-    this.userProfile = null;
+    const storedToken = sessionStorage.getItem('access_token');
+    const storedProfile = sessionStorage.getItem('user_profile');
+    
+    this.accessToken = storedToken;
+    this.userProfile = storedProfile;
   }
 
   async generateCodeVerifier() {
@@ -57,6 +60,12 @@ class AuthService {
       ? 'user-read-playback-state user-modify-playback-state'
       : 'user-read-playback-state';
 
+    if (!this.clientId) {
+      console.error('Client ID não configurado!');
+      alert('Erro: Client ID não configurado. Verifique as variáveis de ambiente.');
+      return;
+    }
+
     const codeVerifier = await this.generateCodeVerifier();
     const codeChallenge = await this.generateCodeChallenge(codeVerifier);
     const state = this.generateState();
@@ -77,6 +86,12 @@ class AuthService {
     
     const authUrl = `${this.spotifyAuthUrl}/authorize?${params.toString()}`;
     
+    console.log('Iniciando login como:', profile);
+    console.log('Escopos:', scopes);
+    console.log('Client ID:', this.clientId);
+    console.log('Redirect URI:', this.redirectUri);
+    console.log('URL de autorização:', authUrl);
+    
     window.location.href = authUrl;
   }
 
@@ -90,16 +105,25 @@ class AuthService {
     
     if (error) {
       console.error('Erro na autenticação:', error);
+      sessionStorage.removeItem('oauth_state');
+      sessionStorage.removeItem('code_verifier');
       return false;
     }
     
     if (!code || !state) {
+      console.log('Código ou state não encontrado na URL');
       return false;
     }
     
     const storedState = sessionStorage.getItem('oauth_state');
+    
+    if (!storedState) {
+      return false;
+    }
+    
     if (state !== storedState) {
-      console.error('State inválido - possível ataque CSRF');
+      sessionStorage.removeItem('oauth_state');
+      sessionStorage.removeItem('code_verifier');
       return false;
     }
     
@@ -133,11 +157,23 @@ class AuthService {
       const tokenData = await tokenResponse.json();
       
       this.accessToken = tokenData.access_token;
+      sessionStorage.setItem('access_token', this.accessToken);
       
       sessionStorage.removeItem('code_verifier');
       sessionStorage.removeItem('oauth_state');
       
-      this.userProfile = sessionStorage.getItem('user_profile');
+      const requestedProfile = sessionStorage.getItem('user_profile');
+      
+      const grantedScopes = tokenData.scope ? tokenData.scope.split(' ') : [];
+      const hasModifyScope = grantedScopes.includes('user-modify-playback-state');
+      
+      if (requestedProfile === 'manager' && hasModifyScope) {
+        this.userProfile = 'manager';
+      } else {
+        this.userProfile = 'viewer';
+      }
+      
+      sessionStorage.setItem('user_profile', this.userProfile);
       
       return true;
     } catch (error) {
@@ -147,7 +183,17 @@ class AuthService {
   }
 
   isAuthenticated() {
-    return this.accessToken !== null;
+    if (this.accessToken) {
+      return true;
+    }
+    
+    const storedToken = sessionStorage.getItem('access_token');
+    if (storedToken) {
+      this.accessToken = storedToken;
+      return true;
+    }
+    
+    return false;
   }
 
   getAccessToken() {
@@ -174,6 +220,8 @@ class AuthService {
     
     if (response.status === 401) {
       this.accessToken = null;
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('user_profile');
       throw new Error('Token expirado');
     }
     
@@ -188,7 +236,10 @@ class AuthService {
   logout() {
     this.accessToken = null;
     this.userProfile = null;
-    sessionStorage.clear();
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('user_profile');
+    sessionStorage.removeItem('code_verifier');
+    sessionStorage.removeItem('oauth_state');
     
     window.location.href = `${this.spotifyAuthUrl}/logout`;
   }

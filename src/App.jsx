@@ -7,23 +7,21 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-
-    if (code) {
-      handleOAuthCallback();
-    } else {
-      setIsAuthenticated(authService.isAuthenticated());
-      setIsLoading(false);
-    }
-  }, []);
-
   const handleOAuthCallback = async () => {
     setIsLoading(true);
     try {
       const success = await authService.handleCallback();
-      setIsAuthenticated(success);
+      
+      if (success) {
+        const token = sessionStorage.getItem('access_token');
+        if (token) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
     } catch (error) {
       console.error('Erro no callback OAuth:', error);
       setIsAuthenticated(false);
@@ -31,6 +29,24 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+
+      if (code) {
+        await handleOAuthCallback();
+      } else {
+        const authenticated = authService.isAuthenticated();
+        setIsAuthenticated(authenticated);
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
 
   if (isLoading) {
     return (

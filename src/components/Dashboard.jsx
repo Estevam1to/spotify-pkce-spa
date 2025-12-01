@@ -28,6 +28,12 @@ function Dashboard() {
       console.error('Erro ao buscar música atual:', err);
       setError(err.message);
       setCurrentTrack(null);
+      
+      if (err.message === 'Token expirado' || err.message === 'Não autenticado') {
+        setTimeout(() => {
+          window.location.href = window.location.origin + window.location.pathname;
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
