@@ -257,7 +257,8 @@ class AuthService {
     sessionStorage.removeItem('code_verifier');
     sessionStorage.removeItem('oauth_state');
     
-    window.location.href = window.location.origin + window.location.pathname;
+    const logoutUrl = `${this.spotifyAuthUrl}/logout?redirect_uri=${encodeURIComponent(this.redirectUri)}`;
+    window.location.href = logoutUrl;
   }
 }
 
