@@ -231,12 +231,30 @@ class AuthService {
       throw new Error('Token expirado');
     }
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Erro na requisição');
+    if (response.status === 204) {
+      return null;
     }
     
-    return response.json();
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Erro na requisição');
+      } else {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      if (text) {
+        return JSON.parse(text);
+      }
+      return null;
+    }
+    
+    return null;
   }
 
   logout() {
