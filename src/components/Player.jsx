@@ -28,7 +28,6 @@ function Player({ currentTrack, isManager, onUpdate }) {
         setLoading(false);
       }, 500);
     } catch (error) {
-      console.error('Erro ao controlar reprodução:', error);
       setActionError(error.message);
       setLoading(false);
       
@@ -56,7 +55,6 @@ function Player({ currentTrack, isManager, onUpdate }) {
         setLoading(false);
       }, 500);
     } catch (error) {
-      console.error('Erro ao pular música:', error);
       setActionError(error.message);
       setLoading(false);
       
@@ -84,7 +82,6 @@ function Player({ currentTrack, isManager, onUpdate }) {
         setLoading(false);
       }, 500);
     } catch (error) {
-      console.error('Erro ao voltar música:', error);
       setActionError(error.message);
       setLoading(false);
       
@@ -136,7 +133,7 @@ function Player({ currentTrack, isManager, onUpdate }) {
       {isManager ? (
         <div className="border-t border-white border-opacity-20 pt-6">
           <h3 className="text-white font-semibold mb-4 text-center">
-            🎛️ Controles (Manager)
+            Controles
           </h3>
           
           {actionError && (
@@ -190,15 +187,11 @@ function Player({ currentTrack, isManager, onUpdate }) {
               </svg>
             </button>
           </div>
-          
-          <p className="text-center text-green-200 text-sm mt-4">
-            ✅ Chamadas reais à API do Spotify (PUT/POST /me/player/...)
-          </p>
         </div>
       ) : (
         <div className="border-t border-white border-opacity-20 pt-6 text-center">
           <p className="text-gray-300 text-sm">
-            👁️ Modo Viewer: Apenas visualização. Faça login como Manager para controlar a reprodução.
+            Apenas visualização disponível
           </p>
         </div>
       )}

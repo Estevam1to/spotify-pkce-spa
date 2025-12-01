@@ -67,7 +67,6 @@ class AuthService {
       : 'user-read-playback-state';
 
     if (!this.clientId) {
-      console.error('Client ID não configurado!');
       alert('Erro: Client ID não configurado. Verifique as variáveis de ambiente.');
       return;
     }
@@ -92,12 +91,6 @@ class AuthService {
     
     const authUrl = `${this.spotifyAuthUrl}/authorize?${params.toString()}`;
     
-    console.log('Iniciando login como:', profile);
-    console.log('Escopos:', scopes);
-    console.log('Client ID:', this.clientId);
-    console.log('Redirect URI:', this.redirectUri);
-    console.log('URL de autorização:', authUrl);
-    
     window.location.href = authUrl;
   }
 
@@ -110,14 +103,12 @@ class AuthService {
     window.history.replaceState({}, document.title, window.location.pathname);
     
     if (error) {
-      console.error('Erro na autenticação:', error);
       sessionStorage.removeItem('oauth_state');
       sessionStorage.removeItem('code_verifier');
       return false;
     }
     
     if (!code || !state) {
-      console.log('Código ou state não encontrado na URL');
       return false;
     }
     
@@ -135,7 +126,6 @@ class AuthService {
     
     const codeVerifier = sessionStorage.getItem('code_verifier');
     if (!codeVerifier) {
-      console.error('Code verifier não encontrado');
       return false;
     }
     
@@ -155,8 +145,7 @@ class AuthService {
       });
       
       if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json();
-        console.error('Erro ao obter token:', errorData);
+        await tokenResponse.json();
         return false;
       }
       
@@ -183,7 +172,6 @@ class AuthService {
       
       return true;
     } catch (error) {
-      console.error('Erro na troca de token:', error);
       return false;
     }
   }
@@ -254,7 +242,6 @@ class AuthService {
         }
         return null;
       } catch (parseError) {
-        console.error('Erro ao fazer parse do JSON:', parseError);
         return null;
       }
     }

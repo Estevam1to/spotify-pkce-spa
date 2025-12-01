@@ -55,10 +55,7 @@ function Dashboard() {
       <header className="bg-black bg-opacity-30 backdrop-blur-sm p-4">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white">Spotify PKCE SPA</h1>
-            <p className="text-green-200 text-sm">
-              Perfil: <span className="font-semibold capitalize">{userProfile}</span>
-            </p>
+            <h1 className="text-2xl font-bold text-white">Spotify Player</h1>
           </div>
           <button
             onClick={handleLogout}

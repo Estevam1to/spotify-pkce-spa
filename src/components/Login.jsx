@@ -9,7 +9,6 @@ function Login() {
     try {
       await authService.initiateLogin(profile);
     } catch (error) {
-      console.error('Erro ao iniciar login:', error);
       setLoading(false);
     }
   };
@@ -29,10 +28,10 @@ function Login() {
         <div className="space-y-4">
           <div className="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              👁️ Viewer
+              Viewer
             </h2>
             <p className="text-gray-600 text-sm mb-4">
-              Apenas visualização. Escopo: <code className="bg-gray-100 px-2 py-1 rounded">user-read-playback-state</code>
+              Apenas visualização da música atual
             </p>
             <button
               onClick={() => handleLogin('viewer')}
@@ -45,10 +44,10 @@ function Login() {
 
           <div className="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              🎛️ Manager
+              Manager
             </h2>
             <p className="text-gray-600 text-sm mb-4">
-              Controle completo. Escopos: <code className="bg-gray-100 px-2 py-1 rounded">user-read-playback-state</code> e <code className="bg-gray-100 px-2 py-1 rounded">user-modify-playback-state</code>
+              Visualização e controle de reprodução
             </p>
             <button
               onClick={() => handleLogin('manager')}
@@ -60,11 +59,6 @@ function Login() {
           </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Este projeto demonstra OAuth 2.0 com PKCE para segurança acadêmica
-          </p>
-        </div>
       </div>
     </div>
   );

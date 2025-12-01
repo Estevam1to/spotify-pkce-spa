@@ -23,7 +23,6 @@ function App() {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Erro no callback OAuth:', error);
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
