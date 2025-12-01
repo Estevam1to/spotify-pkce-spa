@@ -247,11 +247,16 @@ class AuthService {
     
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      const text = await response.text();
-      if (text) {
-        return JSON.parse(text);
+      try {
+        const text = await response.text();
+        if (text && text.trim()) {
+          return JSON.parse(text);
+        }
+        return null;
+      } catch (parseError) {
+        console.error('Erro ao fazer parse do JSON:', parseError);
+        return null;
       }
-      return null;
     }
     
     return null;

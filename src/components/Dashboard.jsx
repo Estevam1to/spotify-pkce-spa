@@ -25,15 +25,14 @@ function Dashboard() {
         setCurrentTrack(null);
       }
     } catch (err) {
-      console.error('Erro ao buscar música atual:', err);
-      setError(err.message);
-      setCurrentTrack(null);
-      
       if (err.message === 'Token expirado' || err.message === 'Não autenticado') {
         setTimeout(() => {
           window.location.href = window.location.origin + window.location.pathname;
         }, 2000);
+      } else if (!err.message.includes('JSON')) {
+        setError(err.message);
       }
+      setCurrentTrack(null);
     } finally {
       setLoading(false);
     }
