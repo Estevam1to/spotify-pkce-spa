@@ -8,7 +8,13 @@ class AuthService {
     if (pathname !== '/' && !pathname.endsWith('/')) {
       pathname = pathname + '/';
     }
-    this.redirectUri = window.location.origin + pathname;
+    
+    let origin = window.location.origin;
+    if (origin.includes('estevam1to.github.io')) {
+      origin = origin.replace('estevam1to', 'Estevam1to');
+    }
+    
+    this.redirectUri = origin + pathname;
     
     const storedToken = sessionStorage.getItem('access_token');
     const storedProfile = sessionStorage.getItem('user_profile');
