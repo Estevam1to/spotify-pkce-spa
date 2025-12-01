@@ -208,16 +208,30 @@ class AuthService {
       ...options.headers
     };
     
-    if (options.body && typeof options.body === 'object' && !(options.body instanceof URLSearchParams)) {
-      headers['Content-Type'] = 'application/json';
-    } else if (options.body && typeof options.body === 'string') {
-      headers['Content-Type'] = 'application/json';
+    const hasBody = options.body !== undefined && options.body !== null;
+    
+    if (hasBody) {
+      if (typeof options.body === 'object' && !(options.body instanceof URLSearchParams) && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      } else if (typeof options.body === 'string' && options.body.length > 0) {
+        headers['Content-Type'] = 'application/json';
+      }
     }
     
-    const response = await fetch(`${this.spotifyApiUrl}${endpoint}`, {
-      ...options,
+    const fetchOptions = {
+      method: options.method || 'GET',
       headers: headers
-    });
+    };
+    
+    if (hasBody) {
+      if (typeof options.body === 'object' && !(options.body instanceof URLSearchParams) && !(options.body instanceof FormData)) {
+        fetchOptions.body = JSON.stringify(options.body);
+      } else {
+        fetchOptions.body = options.body;
+      }
+    }
+    
+    const response = await fetch(`${this.spotifyApiUrl}${endpoint}`, fetchOptions);
     
     if (response.status === 401) {
       this.accessToken = null;

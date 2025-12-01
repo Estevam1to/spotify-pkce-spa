@@ -21,9 +21,10 @@ function Dashboard() {
       
       if (data && data.item) {
         setCurrentTrack(data);
-      } else if (data && !data.item) {
-        setCurrentTrack(null);
       } else {
+        if (currentTrack) {
+          return;
+        }
         setCurrentTrack(null);
       }
     } catch (err) {
@@ -31,14 +32,21 @@ function Dashboard() {
         setTimeout(() => {
           window.location.href = window.location.origin + window.location.pathname;
         }, 2000);
+        setCurrentTrack(null);
       } else if (err.message.includes('502') || err.message.includes('Bad Gateway')) {
         setError('Serviço temporariamente indisponível. Tente novamente em alguns instantes.');
+        if (!currentTrack) {
+          setCurrentTrack(null);
+        }
       } else if (!err.message.includes('JSON')) {
         setError(err.message);
-      }
-      
-      if (!err.message.includes('502') && !err.message.includes('Bad Gateway')) {
-        setCurrentTrack(null);
+        if (!currentTrack) {
+          setCurrentTrack(null);
+        }
+      } else {
+        if (!currentTrack) {
+          setCurrentTrack(null);
+        }
       }
     } finally {
       setLoading(false);

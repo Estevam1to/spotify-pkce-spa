@@ -20,16 +20,20 @@ function Player({ currentTrack, isManager, onUpdate }) {
         : '/me/player/play';
       
       await authService.apiRequest(endpoint, {
-        method: 'PUT'
+        method: 'PUT',
+        body: {}
       });
       
       setTimeout(() => {
         onUpdate();
         setLoading(false);
-      }, 500);
+      }, 1000);
     } catch (error) {
       if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
-        setActionError('Serviço temporariamente indisponível. Tente novamente.');
+        setActionError('Erro ao comunicar com o Spotify. Verifique se há um dispositivo ativo tocando música.');
+        setTimeout(() => {
+          onUpdate();
+        }, 2000);
       } else {
         setActionError(error.message);
       }
@@ -51,16 +55,20 @@ function Player({ currentTrack, isManager, onUpdate }) {
     
     try {
       await authService.apiRequest('/me/player/next', {
-        method: 'POST'
+        method: 'POST',
+        body: {}
       });
       
       setTimeout(() => {
         onUpdate();
         setLoading(false);
-      }, 500);
+      }, 1500);
     } catch (error) {
       if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
         setActionError('Serviço temporariamente indisponível. Tente novamente.');
+        setTimeout(() => {
+          onUpdate();
+        }, 2000);
       } else {
         setActionError(error.message);
       }
@@ -82,16 +90,20 @@ function Player({ currentTrack, isManager, onUpdate }) {
     
     try {
       await authService.apiRequest('/me/player/previous', {
-        method: 'POST'
+        method: 'POST',
+        body: {}
       });
       
       setTimeout(() => {
         onUpdate();
         setLoading(false);
-      }, 500);
+      }, 1500);
     } catch (error) {
       if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
         setActionError('Serviço temporariamente indisponível. Tente novamente.');
+        setTimeout(() => {
+          onUpdate();
+        }, 2000);
       } else {
         setActionError(error.message);
       }
