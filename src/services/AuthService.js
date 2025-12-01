@@ -203,13 +203,20 @@ class AuthService {
       throw new Error('Não autenticado');
     }
     
+    const headers = {
+      'Authorization': `Bearer ${this.accessToken}`,
+      ...options.headers
+    };
+    
+    if (options.body && typeof options.body === 'object' && !(options.body instanceof URLSearchParams)) {
+      headers['Content-Type'] = 'application/json';
+    } else if (options.body && typeof options.body === 'string') {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await fetch(`${this.spotifyApiUrl}${endpoint}`, {
       ...options,
-      headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
+      headers: headers
     });
     
     if (response.status === 401) {
@@ -226,8 +233,13 @@ class AuthService {
     if (!response.ok) {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Erro na requisição');
+        try {
+          const errorData = await response.json();
+          const errorMessage = errorData.error?.message || `Erro ${response.status}: ${response.statusText}`;
+          throw new Error(errorMessage);
+        } catch (parseError) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
       } else {
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }

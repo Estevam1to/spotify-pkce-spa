@@ -28,7 +28,11 @@ function Player({ currentTrack, isManager, onUpdate }) {
         setLoading(false);
       }, 500);
     } catch (error) {
-      setActionError(error.message);
+      if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+        setActionError('Serviço temporariamente indisponível. Tente novamente.');
+      } else {
+        setActionError(error.message);
+      }
       setLoading(false);
       
       if (error.message === 'Token expirado' || error.message === 'Não autenticado') {
@@ -55,7 +59,11 @@ function Player({ currentTrack, isManager, onUpdate }) {
         setLoading(false);
       }, 500);
     } catch (error) {
-      setActionError(error.message);
+      if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+        setActionError('Serviço temporariamente indisponível. Tente novamente.');
+      } else {
+        setActionError(error.message);
+      }
       setLoading(false);
       
       if (error.message === 'Token expirado' || error.message === 'Não autenticado') {
@@ -82,7 +90,11 @@ function Player({ currentTrack, isManager, onUpdate }) {
         setLoading(false);
       }, 500);
     } catch (error) {
-      setActionError(error.message);
+      if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+        setActionError('Serviço temporariamente indisponível. Tente novamente.');
+      } else {
+        setActionError(error.message);
+      }
       setLoading(false);
       
       if (error.message === 'Token expirado' || error.message === 'Não autenticado') {
