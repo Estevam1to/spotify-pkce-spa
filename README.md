@@ -175,46 +175,98 @@ Após o deploy, atualize o Redirect URI no Spotify Dashboard:
 - Estar autenticado no Spotify
 - Ter autorizado a aplicação com os escopos necessários
 
-## Implementação de Segurança
+## Documentação Técnica
 
-### PKCE (Proof Key for Code Exchange)
+Esta seção explica as decisões técnicas e de segurança tomadas durante o desenvolvimento da aplicação.
 
-O PKCE é implementado manualmente usando Web Crypto API:
+### Por que PKCE?
 
-1. **Geração do code_verifier**: Valor aleatório de 32 bytes, codificado em base64url
-2. **Cálculo do code_challenge**: Hash SHA-256 do verifier, codificado em base64url
-3. **Armazenamento**: O `code_verifier` é armazenado no `sessionStorage` durante o fluxo
-4. **Troca de token**: O `code_verifier` é enviado junto com o `authorization_code` para obter o token
+O PKCE (Proof Key for Code Exchange) foi escolhido como método de autenticação por várias razões críticas de segurança:
 
-### Proteção CSRF (State)
+1. **Proteção contra Authorization Code Interception Attack**: Em aplicações Single Page Application (SPA), não há um servidor backend para proteger o `client_secret`. O PKCE elimina a necessidade de um `client_secret`, tornando a aplicação segura mesmo quando o código-fonte é público.
 
-1. **Geração**: Um `state` aleatório é gerado antes do redirecionamento
-2. **Armazenamento**: Salvo no `sessionStorage`
-3. **Validação**: No callback, o `state` retornado é comparado com o armazenado
-4. **Rejeição**: Se não corresponder, a requisição é rejeitada (possível ataque CSRF)
+2. **Compatibilidade com SPAs**: O fluxo OAuth 2.0 tradicional requer um `client_secret`, que não pode ser armazenado com segurança em aplicações client-side. O PKCE foi especificamente projetado para resolver esse problema, permitindo que SPAs usem o fluxo Authorization Code de forma segura.
+
+3. **Recomendação do OAuth 2.1**: O OAuth 2.1 (draft) torna o PKCE obrigatório para todos os fluxos de Authorization Code, refletindo a evolução das melhores práticas de segurança.
+
+4. **Implementação Nativa**: A Web Crypto API, disponível nativamente nos navegadores modernos, permite implementar PKCE sem dependências externas, mantendo o bundle da aplicação pequeno e seguro.
+
+**Como funciona o PKCE:**
+
+- **Code Verifier**: Um valor aleatório de 32 bytes é gerado e codificado em base64url. Este valor permanece secreto no cliente.
+- **Code Challenge**: Um hash SHA-256 do verifier é calculado e também codificado em base64url. Este valor é enviado publicamente na requisição de autorização.
+- **Validação**: Quando o servidor de autorização retorna o `authorization_code`, o cliente envia o `code_verifier` original junto com o código. O servidor recalcula o hash e compara com o `code_challenge` original. Se corresponderem, a troca é autorizada.
+
+Este mecanismo garante que mesmo que um atacante intercepte o `authorization_code`, ele não conseguirá trocá-lo por um token sem o `code_verifier` original.
+
+### Como Funciona a Validação de State?
+
+A validação de `state` é uma proteção essencial contra ataques CSRF (Cross-Site Request Forgery) no fluxo OAuth 2.0:
+
+1. **Geração do State**: Antes de redirecionar o usuário para o servidor de autorização, a aplicação gera um valor aleatório e único (geralmente um UUID ou string aleatória de alta entropia).
+
+2. **Armazenamento Local**: Este valor é armazenado no `sessionStorage` do navegador, associado à sessão atual do usuário.
+
+3. **Inclusão na Requisição**: O valor do `state` é incluído como parâmetro na URL de autorização enviada ao Spotify.
+
+4. **Retorno do State**: Quando o Spotify redireciona o usuário de volta para a aplicação após a autorização, ele inclui o mesmo valor de `state` nos parâmetros da URL de callback.
+
+5. **Validação**: A aplicação compara o `state` retornado na URL com o valor armazenado no `sessionStorage`. Se os valores corresponderem, a requisição é considerada legítima. Se não corresponderem, a requisição é rejeitada como um possível ataque CSRF.
+
+**Por que isso é importante?**
+
+Sem a validação de `state`, um atacante poderia:
+- Criar uma URL de autorização maliciosa que redireciona para a aplicação da vítima
+- Se a vítima estiver autenticada, o atacante poderia obter tokens de acesso em nome da vítima
+- O `state` garante que apenas requisições iniciadas pela própria aplicação sejam aceitas
+
+### Decisões de Arquitetura
+
+**Separação de Responsabilidades**: O código foi organizado em componentes React para a UI e um serviço dedicado (`AuthService.js`) para toda a lógica de autenticação. Isso facilita manutenção, testes e reutilização.
+
+**Armazenamento de Tokens**: Os tokens são mantidos em memória (variáveis JavaScript) com backup temporário no `sessionStorage`. Isso garante que:
+- Tokens não persistem após o fechamento do navegador
+- Tokens não são acessíveis por outras abas/origins (diferente do `localStorage`)
+- A limpeza é automática ao fazer logout
+
+**Escopos Granulares**: A aplicação implementa dois perfis (Viewer e Manager) com escopos diferentes, demonstrando o princípio de menor privilégio. Usuários só recebem as permissões necessárias para suas funcionalidades.
+
+**Deploy Automatizado**: O uso de GitHub Actions para deploy garante que:
+- O código seja testado antes do deploy
+- As credenciais sejam gerenciadas de forma segura via Secrets
+- O processo seja reproduzível e auditável
 
 ### Armazenamento de Tokens
 
-- O `access_token` é armazenado em memória (variável JavaScript)
-- Um backup temporário é mantido no `sessionStorage` para persistir entre recarregamentos
-- **NÃO** é usado `localStorage` para tokens
-- O token é limpo automaticamente no logout
+A decisão de armazenar tokens em memória (variáveis JavaScript) com backup temporário no `sessionStorage` foi tomada por razões de segurança:
+
+- **Não persistência**: Tokens não persistem após o fechamento do navegador, reduzindo o risco de acesso não autorizado
+- **Isolamento por aba**: Diferente do `localStorage`, o `sessionStorage` é isolado por aba, impedindo que outras abas/origins acessem os tokens
+- **Limpeza automática**: O token é limpo automaticamente no logout, garantindo que não permaneça no navegador após o término da sessão
+- **Backup temporário**: O backup no `sessionStorage` permite que a sessão persista entre recarregamentos da página, mas apenas durante a sessão do navegador
+
+**Por que não usar `localStorage`?**
+O `localStorage` persiste indefinidamente e é acessível por todas as abas do mesmo origin, aumentando a superfície de ataque. Em caso de XSS (Cross-Site Scripting), um atacante poderia acessar tokens armazenados no `localStorage` mesmo após o fechamento da aplicação.
 
 ### Logout Seguro
 
-O logout implementa o requisito de segurança completo:
+O logout implementa um processo completo de encerramento de sessão:
 
-1. **Limpeza local**: Remove o token da memória e do `sessionStorage`
-2. **Encerramento de sessão remota**: Redireciona para o `end_session_endpoint` do Spotify (`/logout`)
+1. **Limpeza local**: Remove o token da memória e do `sessionStorage`, garantindo que não haja resíduos locais
+2. **Encerramento de sessão remota**: Redireciona para o `end_session_endpoint` do Spotify (`/logout`), encerrando a sessão no servidor de autorização
 3. **Redirecionamento**: Após logout no Spotify, o usuário é redirecionado de volta para a aplicação
 
-Isso garante que a sessão seja encerrada tanto localmente quanto no servidor do Spotify.
+Esta abordagem garante que a sessão seja encerrada tanto localmente quanto no servidor do Spotify, seguindo as melhores práticas de segurança OAuth 2.0.
 
 ### Gerenciamento de Credenciais
 
-- O `CLIENT_ID` é injetado via GitHub Secrets durante o build
-- Nunca é hardcoded no código-fonte
-- A variável de ambiente `VITE_SPOTIFY_CLIENT_ID` é usada apenas no build
+O `CLIENT_ID` é gerenciado de forma segura através de:
+
+- **GitHub Secrets**: Em produção, o `CLIENT_ID` é injetado via GitHub Secrets durante o build, nunca hardcoded no código-fonte
+- **Variáveis de ambiente**: A variável `VITE_SPOTIFY_CLIENT_ID` é usada apenas no build, não sendo exposta no código final
+- **Separação de ambientes**: Diferentes valores podem ser usados para desenvolvimento e produção, sem comprometer a segurança
+
+Esta abordagem garante que mesmo com o código-fonte público, as credenciais não sejam expostas.
 
 ## Endpoints da API Utilizados
 
